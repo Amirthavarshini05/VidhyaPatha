@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { collegeAPI } from "./services/api";
 
 export default function Colleges() {
   const [search, setSearch] = useState("");
@@ -6,25 +7,35 @@ export default function Colleges() {
   const [stream, setStream] = useState("");
   const [medium, setMedium] = useState("");
   const [hostel, setHostel] = useState(false);
+  const [colleges, setColleges] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const colleges = [
-    {
-      name: "ABC Engineering College",
-      address: "Chennai, Tamil Nadu",
-      courses: "CSE, ECE, MECH",
-      cutoff: "85%",
-      facilities: "Library, Hostel, WiFi",
-      map: "https://maps.google.com",
-    },
-    {
-      name: "XYZ Arts & Science College",
-      address: "Coimbatore, Tamil Nadu",
-      courses: "B.Sc, B.Com, B.A",
-      cutoff: "75%",
-      facilities: "Hostel, Sports, Lab",
-      map: "https://maps.google.com",
-    },
-  ];
+  React.useEffect(() => {
+    fetchColleges();
+  }, []);
+
+  const fetchColleges = async () => {
+    setLoading(true);
+    try {
+      const filters = {};
+      if (search) filters.search = search;
+      if (district) filters.district = district;
+      if (stream) filters.stream = stream;
+      if (medium) filters.medium = medium;
+      if (hostel) filters.hostel = 'true';
+
+      const response = await collegeAPI.getColleges(filters);
+      setColleges(response.colleges);
+    } catch (error) {
+      console.error("Error fetching colleges:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    fetchColleges();
+  };
 
   return React.createElement(
     "div",
@@ -44,8 +55,17 @@ export default function Colleges() {
           placeholder: "Search colleges...",
           value: search,
           onChange: (e) => setSearch(e.target.value),
+          onKeyPress: (e) => e.key === 'Enter' && handleSearch(),
           className: "w-full p-3 border rounded mb-4",
         }),
+        React.createElement(
+          "button",
+          {
+            onClick: handleSearch,
+            className: "w-full mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700",
+          },
+          "Search Colleges"
+        ),
         React.createElement(
           "div",
           { className: "grid grid-cols-2 md:grid-cols-4 gap-4" },
@@ -99,6 +119,7 @@ export default function Colleges() {
       React.createElement(
         "div",
         { className: "grid gap-6 md:grid-cols-2" },
+        loading ? React.createElement("div", { className: "col-span-2 text-center py-8" }, "Loading colleges...") :
         colleges.map((college, index) =>
           React.createElement(
             "div",
@@ -111,24 +132,24 @@ export default function Colleges() {
               { className: "text-xl font-semibold" },
               college.name
             ),
-            React.createElement("p", { className: "text-gray-600" }, college.address),
+            React.createElement("p", { className: "text-gray-600" }, college.address || "Address not available"),
             React.createElement(
               "p",
               null,
               React.createElement("strong", null, "Courses: "),
-              college.courses
+              Array.isArray(college.courses) ? college.courses.join(", ") : college.courses
             ),
             React.createElement(
               "p",
               null,
               React.createElement("strong", null, "Cut-Off: "),
-              college.cutoff
+              college.cutoff || "Not specified"
             ),
             React.createElement(
               "p",
               null,
               React.createElement("strong", null, "Facilities: "),
-              college.facilities
+              Array.isArray(college.facilities) ? college.facilities.join(", ") : college.facilities
             ),
             React.createElement(
               "div",
@@ -136,7 +157,7 @@ export default function Colleges() {
               React.createElement(
                 "a",
                 {
-                  href: college.map,
+                  href: college.mapUrl || "#",
                   target: "_blank",
                   rel: "noopener noreferrer",
                   className: "text-blue-600",

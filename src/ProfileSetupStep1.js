@@ -1,16 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { profileAPI } from "./services/api";
 
 export default function ProfileSetupStep1() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ age: "", qualification: "", interests: "", careerGoal: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    setLoading(true);
     localStorage.setItem("profileStep1", JSON.stringify(form));
+    
+    try {
+      await profileAPI.updateProfile({ ...form, step: 1 });
+    } catch (error) {
+      console.error("Error saving profile step 1:", error);
+    } finally {
+      setLoading(false);
+    }
+    
     navigate("/profile-setup-step2");
   };
 
@@ -100,9 +112,10 @@ export default function ProfileSetupStep1() {
         {
           key: "next-btn",
           onClick: handleNext,
-          className: "mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          disabled: loading,
+          className: `mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`
         },
-        "Save & Continue"
+        loading ? "Saving..." : "Save & Continue"
       )
     ]
   );

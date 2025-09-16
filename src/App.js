@@ -7,6 +7,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom";
+import { authAPI } from "./services/api";
 
 import Dashboard from "./Dashboard";
 import AptitudeTest from "./Aptitudetest";
@@ -137,7 +138,16 @@ function PrivateRoute({ isAuthenticated, children }) {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(authAPI.isAuthenticated());
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setIsAuthenticated(false);
+  };
 
   return (
     <Router>
@@ -147,8 +157,8 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/signin" element={<SignIn onLogin={() => setIsAuthenticated(true)} />} />
-        <Route path="/signup" element={<SignUp onSignup={() => setIsAuthenticated(true)} />} />
+        <Route path="/signin" element={<SignIn onLogin={handleLogin} />} />
+        <Route path="/signup" element={<SignUp onSignup={handleLogin} />} />
         <Route path="/profile-setup" element={<ProfileSetupStep1 />} />
         <Route path="/profile-setup-step2" element={<ProfileSetupStep2 />} />
         <Route path="/profile-setup-step3" element={<ProfileSetupStep3 />} />

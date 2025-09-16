@@ -1,15 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { authAPI } from "./services/api";
 
 export default function SignIn({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onLogin();              // ✅ call parent’s function
-    navigate("/dashboard"); // ✅ go to dashboard
+    setLoading(true);
+    setError("");
+
+    try {
+      await authAPI.signin(email, password);
+      onLogin();
+      navigate("/dashboard");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return React.createElement(
@@ -25,6 +38,11 @@ export default function SignIn({ onLogin }) {
         "h2",
         { className: "text-2xl font-bold mb-6 text-center" },
         "Sign In"
+      ),
+      error && React.createElement(
+        "div",
+        { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" },
+        error
       ),
       React.createElement("input", {
         type: "email",
@@ -44,10 +62,11 @@ export default function SignIn({ onLogin }) {
         "button",
         {
           type: "submit",
+          disabled: loading,
           className:
-            "w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition",
+            `w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`,
         },
-        "Sign In"
+        loading ? "Signing In..." : "Sign In"
       ),
       React.createElement(
         "p",

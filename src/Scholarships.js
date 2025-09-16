@@ -1,15 +1,28 @@
 import React, { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { scholarshipAPI } from "./services/api";
 
 export default function Scholarships() {
   const [date, setDate] = useState(new Date());
+  const [scholarships, setScholarships] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const scholarships = [
-    { title: "National Merit Scholarship", amount: "₹50,000", eligibility: "Class 12 Passed", lastDate: "2025-10-15" },
-    { title: "State Govt Scholarship", amount: "₹30,000", eligibility: "Family Income < ₹2L", lastDate: "2025-11-01" },
-    { title: "ST/SC Special Scholarship", amount: "₹40,000", eligibility: "Reserved Category", lastDate: "2025-09-25" }
-  ];
+  React.useEffect(() => {
+    fetchScholarships();
+  }, []);
+
+  const fetchScholarships = async () => {
+    setLoading(true);
+    try {
+      const response = await scholarshipAPI.getScholarships();
+      setScholarships(response.scholarships);
+    } catch (error) {
+      console.error("Error fetching scholarships:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const notifications = [
     "Anna University Admissions Open – Last date Sep 20, 2025",
@@ -32,6 +45,7 @@ export default function Scholarships() {
         React.createElement(
           "div",
           { className: "grid md:grid-cols-3 gap-6" },
+          loading ? React.createElement("div", { className: "col-span-3 text-center py-8" }, "Loading scholarships...") :
           scholarships.map((s, idx) =>
             React.createElement(
               "div",
@@ -39,7 +53,9 @@ export default function Scholarships() {
               React.createElement("h3", { className: "text-lg font-semibold" }, s.title),
               React.createElement("p", null, React.createElement("strong", null, "Amount:"), " ", s.amount),
               React.createElement("p", null, React.createElement("strong", null, "Eligibility:"), " ", s.eligibility),
-              React.createElement("p", null, React.createElement("strong", null, "Last Date:"), " ", s.lastDate),
+              React.createElement("p", null, React.createElement("strong", null, "Last Date:"), " ", 
+                new Date(s.lastDate).toLocaleDateString()
+              ),
               React.createElement(
                 "button",
                 { className: "mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" },

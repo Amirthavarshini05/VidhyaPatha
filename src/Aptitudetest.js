@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import logo from './logo.svg';
+import { aptitudeAPI } from './services/api';
 
 const AptitudeTest = ({ goBack, handlePageChange }) => {
   const [answers, setAnswers] = useState({});
@@ -51,6 +52,8 @@ const AptitudeTest = ({ goBack, handlePageChange }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Calculate scores (existing logic)
     const score = { science: 0, commerce: 0, arts: 0, medical: 0, engineering: 0 };
     if (answers.q1 === "A logical, problem-solving one") score.engineering += 2;
     if (answers.q2 === "Researching new technologies") score.science += 2;
@@ -82,8 +85,21 @@ const AptitudeTest = ({ goBack, handlePageChange }) => {
       }
     }
 
-    setAnswers(prev => ({ ...prev, suggestedStream }));
+    const personalityType = "Innovator"; // You can make this dynamic based on answers
+    
+    // Save results to database
+    saveAptitudeResults(answers, suggestedStream, personalityType);
+    
+    setAnswers(prev => ({ ...prev, suggestedStream, personalityType }));
     setShowResults(true);
+  };
+
+  const saveAptitudeResults = async (answers, suggestedStream, personalityType) => {
+    try {
+      await aptitudeAPI.submitResults(answers, suggestedStream, personalityType);
+    } catch (error) {
+      console.error("Error saving aptitude results:", error);
+    }
   };
 
   const currentQuestion = questions[currentQuestionIndex];

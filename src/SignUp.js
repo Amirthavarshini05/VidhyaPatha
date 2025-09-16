@@ -1,19 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { authAPI } from "./services/api";
 
 function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    if (email && password) {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/profile-setup"); // ✅ Go to profile setup after signup
-    } else {
-      alert("Please enter email and password");
+    try {
+      await authAPI.signup(email, password);
+      navigate("/profile-setup");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,6 +37,11 @@ function SignUp() {
         "h2",
         { className: "text-2xl font-bold mb-6 text-center" },
         "Sign Up"
+      ),
+      error && React.createElement(
+        "div",
+        { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" },
+        error
       ),
       React.createElement("input", {
         type: "email",
@@ -49,10 +61,11 @@ function SignUp() {
         "button",
         {
           type: "submit",
+          disabled: loading,
           className:
-            "w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition",
+            `w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`,
         },
-        "Sign Up"
+        loading ? "Signing Up..." : "Sign Up"
       ),
       React.createElement(
         "p",
